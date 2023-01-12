@@ -37,12 +37,14 @@ points.append(np.matrix([-1, -1, -1]))
 points.append(np.matrix([1, -1, -1]))
 points.append(np.matrix([1, 1, -1]))
 points.append(np.matrix([-1, 1, -1]))
-points.append(np.matrix([0.5, 0.5, 0.5]))
+
+
 
 
 projection_matrix = np.matrix([
     [1, 0, 0],
     [0, 1, 0],
+    [0, 0, 1],
 ])
 
 
@@ -131,8 +133,8 @@ while True:
 
         projected2d = np.dot(projection_matrix, rotated2d)
 
-        x = int(projected2d[0][0]*SCALE) + POS[0]
-        y = int(projected2d[1][0]*SCALE) + POS[1]
+        x = int(projected2d[0][0]/(projected2d[2][0]+3)*SCALE) + POS[0]
+        y = int(projected2d[1][0]/(projected2d[2][0]+3)*SCALE) + POS[1]
         pg.draw.circle(screen, BLACK, (x, y), 5)
 
     #updating display
