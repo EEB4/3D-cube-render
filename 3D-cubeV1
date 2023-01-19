@@ -1,0 +1,159 @@
+import pygame as pg
+import numpy as np
+from math import *
+from array import *
+
+
+WIDTH, HEIGHT = 800, 600
+pg.display.set_caption("3d cube")
+screen = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
+
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+
+SCALE = 50
+POS = [WIDTH/2, HEIGHT/2]
+
+
+#setting mouseposition/angle variables for first frame to avoid error
+mousepos = array('i', pg.mouse.get_pos())
+prevposx = (mousepos[1]/360) + 3
+prevposy = (mousepos[1]/360) + 180
+
+anglez = 0
+angley = 5
+anglex = 3
+
+
+#start points array
+points = []
+#generating matrix array
+points.append(np.matrix([-1, -1, 1]))
+points.append(np.matrix([1, -1, 1]))
+points.append(np.matrix([1,  1, 1]))
+points.append(np.matrix([-1, 1, 1]))
+points.append(np.matrix([-1, -1, -1]))
+points.append(np.matrix([1, -1, -1]))
+points.append(np.matrix([1, 1, -1]))
+points.append(np.matrix([-1, 1, -1]))
+
+
+projection_matrix = np.matrix([
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1]
+])
+
+projected_points = [
+    [n, n] for n in range(len(points))
+]
+
+def connect_points(i, j, points):
+    pg.draw.line(
+        screen, BLACK, (points[i][0], points[i][1]), (points[j][0], points[j][1]))
+
+
+
+clock = pg.time.Clock()
+while True:
+
+    #window management and framerate limit (because no deltatime)
+    clock.tick(60)
+
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            pg.quit()
+            exit()
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                pg.quit()
+                exit()
+        if event.type == pg.VIDEORESIZE:
+            screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
+            POS = [event.w/2, event.h/2]
+
+
+    #update (runs every frame):
+
+
+
+
+
+
+
+
+    #rotation matrices
+    rotation_z = np.matrix([
+        [cos(anglez), -sin(anglez), 0],
+        [sin(anglez), cos(anglez), 0],
+        [0, 0, 1],
+    ])
+    rotation_y = np.matrix([
+        [cos(angley), 0, sin(angley)],
+        [0, 1, 0],
+        [-sin(angley), 0, cos(angley)],
+    ])
+
+    rotation_x = np.matrix([
+        [1, 0, 0],
+        [0, cos(anglex), -sin(anglex)],
+        [0, sin(anglex), cos(anglex)],
+    ])
+
+    #anglex += 0.01
+    #angley += 0.01
+    #anglez += 0.01
+
+
+
+    #converting pg mouse pos from tuple to array for ease of use
+    mousepos = array('f', pg.mouse.get_pos())
+
+    #constantly checking change in mouse position by subtracting previous frame position (converted into an angle by dividing by 360)
+    anglez = 180
+    angleyF = ((mousepos[0]/360) + 180) - (prevposy)
+    anglexF = ((mousepos[1]/360) + 3) - (prevposx)
+    
+    #if mouse is pressed down
+    click = pg.mouse.get_pressed()
+    if click[0] == True:
+        #when mouse is down change in mouse position is ADDED to current angle
+        anglex += anglexF
+        angley += angleyF
+
+    #mouse positions are stored in variable to be used in the next frame as the previous frame mouse position (this is then used to calculate the change in mouse position)
+    prevposx = (mousepos[1]/360) + 3
+    prevposy = (mousepos[0]/360) + 180
+
+
+
+
+
+    #screen color
+    screen.fill(WHITE)
+
+    #drawing points
+    i=0
+    for point in points:
+        rotated2d = np.dot(rotation_y, point.reshape((3, 1)))
+        rotated2d = np.dot(rotation_x, rotated2d)
+        #rotated2d = np.dot(rotation_x, rotated2d)
+
+        projected2d = np.dot(projection_matrix, rotated2d)
+
+        x = int(projected2d[0][0]*SCALE) + POS[0]
+        y = int(projected2d[1][0]*SCALE) + POS[1]
+        pg.draw.circle(screen, BLACK, (x, y), 2)
+
+        projected_points[i] = [x, y]
+        pg.draw.circle(screen, BLACK, (x, y), 3)
+        i += 1
+
+        for p in range(4):
+            connect_points(p, (p+1) % 4, projected_points)
+            connect_points(p+4, ((p+1) % 4) + 4, projected_points)
+            connect_points(p, (p+4), projected_points)
+
+    #updating display
+    pg.display.update()
